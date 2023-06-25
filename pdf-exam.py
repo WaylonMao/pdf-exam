@@ -25,15 +25,25 @@ def parse_questions(data):
     questions = []
     lines = data.split('\n')
     question_data = {}
+    is_question = False
+    is_explain = False
     for line in lines:
         line = line.strip()
         if line.startswith('Q'):
             if question_data:
                 questions.append(question_data)
                 question_data = {}
+                is_explain = False
             question_data['No'] = line.split('.')[0].strip()
+            is_question = True
             question_data['Question'] = line.split('.')[1].strip()
+        elif is_question and not line.startswith('A.'):
+            if 'Question' in question_data:
+                question_data['Question'] += ' ' + line.strip()
+            else:
+                question_data['Question'] = line.strip()
         elif line.startswith('A.'):
+            is_question = False
             question_data['OptionA'] = line[2:].strip()
         elif line.startswith('B.'):
             question_data['OptionB'] = line[2:].strip()
@@ -44,7 +54,14 @@ def parse_questions(data):
         elif line.startswith('答案:'):
             question_data['Answer'] = line[3:].strip()
         elif line.startswith('解析:'):
-            question_data['Explain'] = line[3:].strip()
+            is_explain = True
+            if len(line) > 3:
+                question_data['Explain'] = line[3:].strip()
+        elif is_explain:
+            if 'Explain' in question_data:
+                question_data['Explain'] += ' ' + line.strip()
+            else:
+                question_data['Explain'] = line.strip()
     if question_data:
         questions.append(question_data)
     return questions
